@@ -1,14 +1,15 @@
 ---
 title: "Course Project"
 subtitle: "Practical Machine Learning by Johns Hopkins University"
-author: "[Juan David Leongómez](https://jdleongomez.info)"
+author: "Juan David Leongómez^[[jdleongomez.info](https://jdleongomez.info)]"
 date: "`r Sys.setlocale('LC_TIME','English');format(Sys.Date(),'%d %B, %Y')`"
 output: 
   rmdformats::downcute:
-    self_contained: true
     fig_caption: yes
     highlight: zenburn
     number_sections: yes
+    use_bookdown: true
+    code_folding: hide
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl
 bibliography: https://raw.githubusercontent.com/JDLeongomez/MachineLearningProject/master/refs.bib
 urlcolor: blue
@@ -24,69 +25,97 @@ opts_chunk$set(fig.pos = "H", fig.align = "center")
 options(knitr.kable.NA = " ")
 ```
 
-# Instructions
-
-## **Background**
-
-Using devices such as *Jawbone Up*, *Nike FuelBand*, and *Fitbit* it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement -- a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how *much* of a particular activity they do, but they rarely quantify *how well they do it*. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <http://groupware.les.inf.puc-rio.br/har> (see the section on the Weight Lifting Exercise Dataset).
-
-### **Weight Lifting Exercises Dataset**
+# Instructions {.unnumbered}
 
 <details>
 
 <summary>
 
-Click to expand!
+**Click to expand!**
 
 </summary>
 
-> ![On-body sensing schema](http://groupware.les.inf.puc-rio.br/static/WLE/on-body-sensing-schema.png)\
-> \
-> This human activity recognition research has traditionally focused on discriminating between different activities, i.e. to predict "which" activity was performed at a specific point in time (like with the Daily Living Activities dataset above). The approach we propose for the Weight Lifting Exercises dataset is to investigate "how (well)" an activity was performed by the wearer. The "how (well)" investigation has only received little attention so far, even though it potentially provides useful information for a large variety of applications,such as sports training.
+> ## **Background**
 >
-> In this work ([see the paper](http://groupware.les.inf.puc-rio.br/work.jsf?p1=11201)) we first define quality of execution and investigate three aspects that pertain to qualitative activity recognition: the problem of specifying correct execution, the automatic and robust detection of execution mistakes, and how to provide feedback on the quality of execution to the user. We tried out an on-body sensing approach ([dataset here](http://groupware.les.inf.puc-rio.br/static/WLE/WearableComputing_weight_lifting_exercises_biceps_curl_variations.csv)), but also an "ambient sensing approach" (by using Microsoft Kinect - dataset still unavailable)
+> Using devices such as *Jawbone Up*, *Nike FuelBand*, and *Fitbit* it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement -- a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how *much* of a particular activity they do, but they rarely quantify *how well they do it*. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <http://groupware.les.inf.puc-rio.br/har> (see the section on the Weight Lifting Exercise Dataset).
 >
-> Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).
+> ### **Weight Lifting Exercises Dataset**
 >
-> Class A corresponds to the specified execution of the exercise, while the other 4 classes correspond to common mistakes. Participants were supervised by an experienced weight lifter to make sure the execution complied to the manner they were supposed to simulate. The exercises were performed by six male participants aged between 20-28 years, with little weight lifting experience. We made sure that all participants could easily simulate the mistakes in a safe and controlled manner by using a relatively light dumbbell (1.25kg).
+> <details>
 >
-> Read more: <http://groupware.les.inf.puc-rio.br/har#ixzz6rxTpAQm8>
+> <summary>
+>
+> **Click to expand!**
+>
+> </summary>
+>
+> > ![On-body sensing schema](http://groupware.les.inf.puc-rio.br/static/WLE/on-body-sensing-schema.png)\
+> > \
+> > This human activity recognition research has traditionally focused on discriminating between different activities, i.e. to predict "which" activity was performed at a specific point in time (like with the Daily Living Activities dataset above). The approach we propose for the Weight Lifting Exercises dataset is to investigate "how (well)" an activity was performed by the wearer. The "how (well)" investigation has only received little attention so far, even though it potentially provides useful information for a large variety of applications,such as sports training.
+> >
+> > In this work ([see the paper](http://groupware.les.inf.puc-rio.br/work.jsf?p1=11201)) we first define quality of execution and investigate three aspects that pertain to qualitative activity recognition: the problem of specifying correct execution, the automatic and robust detection of execution mistakes, and how to provide feedback on the quality of execution to the user. We tried out an on-body sensing approach ([dataset here](http://groupware.les.inf.puc-rio.br/static/WLE/WearableComputing_weight_lifting_exercises_biceps_curl_variations.csv)), but also an "ambient sensing approach" (by using Microsoft Kinect - dataset still unavailable)
+> >
+> > Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).
+> >
+> > Class A corresponds to the specified execution of the exercise, while the other 4 classes correspond to common mistakes. Participants were supervised by an experienced weight lifter to make sure the execution complied to the manner they were supposed to simulate. The exercises were performed by six male participants aged between 20-28 years, with little weight lifting experience. We made sure that all participants could easily simulate the mistakes in a safe and controlled manner by using a relatively light dumbbell (1.25kg).
+> >
+> > Read more: <http://groupware.les.inf.puc-rio.br/har#ixzz6rxTpAQm8>
+>
+> </details>
+>
+> ## **Data**
+>
+> The training data for this project are available here:
+>
+> [[https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv]{.ul}](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv)
+>
+> The test data are available here:
+>
+> <https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv>
+>
+> The data for this project come from this source: <http://groupware.les.inf.puc-rio.br/har>. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment.
+>
+> ## **What you should submit**
+>
+> The goal of your project is to predict the manner in which they did the exercise. This is the **"[classe]{.ul}"** variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
+>
+> ### Peer Review Portion
+>
+> Your submission for the Peer Review portion should consist of a link to a Github repo with your R markdown and compiled HTML file describing your analysis. Please constrain the text of the writeup to \< 2000 words and the number of figures to be less than 5. It will make it easier for the graders if you submit a repo with a `gh-pages` branch so the HTML page can be viewed online (and you always want to make it easy on graders :-).
+>
+> ### Course Project Prediction Quiz Portion
+>
+> Apply your machine learning algorithm to the 20 test cases available in the test data above and submit your predictions in appropriate format to the Course Project Prediction Quiz for automated grading.
+>
+> ## **Reproducibility**
+>
+> Due to security concerns with the exchange of R code, your code will not be run during the evaluation by your classmates. Please be sure that if they download the repo, they will be able to view the compiled HTML version of your analysis.
 
-</details>
+# Summary {.unnumbered}
 
-## **Data**
+In this report, I attempt predict the manner in which a group of participants exercise, using machine learning algorithms. These data are described [here](http://groupware.les.inf.puc-rio.br/har) [@vellosoQualitativeActivityRecognition2013]. This class (variable `classe`) is categorised in 5 levels:
 
-The training data for this project are available here:
+-   A = exactly according to the specification
+-   B = throwing the elbows to the front
+-   C = lifting the dumbbell only halfway
+-   D = lowering the dumbbell only halfway
+-   E = throwing the hips to the front
 
-[[https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv]{.ul}](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv)
+To do this, I have a training dataset containing all variables (*n* = 19622), and a testing dataset (*n* = 20) that only contains the predictors, but not the dependent variable (i.e. `classe`). To predict the class, I then divided the original training dataset into further training (`trainTrain`: 70% of the cases; *n* = 13737) and testing (`trainTest`: 30% of the cases; *n* = 5885) datasets, to test the out of sample error with the latter.
 
-The test data are available here:
+I decided to use random forests, as this technique is robust and generally performs well [e.g. @statnikovComprehensiveComparisonRandom2008]. Because all predictors are quantitative, I trained two models, one with PCA pre-processing (Model 1) to create features, and one only with centring and scaling of the predictor variables (Model 2).
 
-<https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv>
+Both models have an extremely high accuracy (see section \@ref(accuracy)). Unsurprisingly, however, Model 2 performs slightly better, despite being more computationally demanding given its larger number of variables, and despite strong correlations between some predictors. Therefore, Model 2 is used to predict `classe` in the original testing (*n* = 20) dataset.
 
-The data for this project come from this source: <http://groupware.les.inf.puc-rio.br/har>. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment [@vellosoQualitativeActivityRecognition2013].
-
-## **What you should submit**
-
-The goal of your project is to predict the manner in which they did the exercise. This is the **"[classe]{.ul}"** variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
-
-### Peer Review Portion
-
-Your submission for the Peer Review portion should consist of a link to a Github repo with your R markdown and compiled HTML file describing your analysis. Please constrain the text of the writeup to \< 2000 words and the number of figures to be less than 5. It will make it easier for the graders if you submit a repo with a `gh-pages` branch so the HTML page can be viewed online (and you always want to make it easy on graders :-).
-
-### Course Project Prediction Quiz Portion
-
-Apply your machine learning algorithm to the 20 test cases available in the test data above and submit your predictions in appropriate format to the Course Project Prediction Quiz for automated grading.
-
-## **Reproducibility**
-
-Due to security concerns with the exchange of R code, your code will not be run during the evaluation by your classmates. Please be sure that if they download the repo, they will be able to view the compiled HTML version of your analysis.
+> **Note:** All code is hidden, but can be displayed with the `code` buttons that appear on the right of this page, throughout the entire report.
 
 # Preliminaries
 
 ## Load packages
 
-```{r}
+Load all used packages.
+
+```{r message = FALSE, warning = FALSE}
 library(tidyverse)
 library(ggpubr)
 library(ggfortify)
@@ -96,10 +125,12 @@ library(knitr)
 library(kableExtra)
 library(caret)
 library(dplyr)
-library(dplyr)
+library(doParallel) #for parallel computation
 ```
 
 ## Load data
+
+Download and load the original training and testing datasets.
 
 ```{r load-data, cache=TRUE}
 #Download and load datasets
@@ -108,18 +139,10 @@ testing <- read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-tes
 
 #Set 'classe' as factor
 training$classe <- as.factor(training$classe)
-levels(training$classe)
+#levels(training$classe)
 ```
 
-Description of `classe` levels:
-
--   A = exactly according to the specification
--   B = throwing the elbows to the front
--   C = lifting the dumbbell only halfway
--   D = lowering the dumbbell only halfway
--   E = throwing the hips to the front
-
-# Model
+# Models
 
 ## Pre-process data
 
@@ -129,7 +152,7 @@ Columns 1 to 7 (i.e. columns: `r paste0(colnames(training)[1:7])`) are not likel
 train <- training[,-c(1:7)]
 ```
 
-There are several variables with a high number of `NAs` or `#DIV/0!`. These are obviously a problem for fitting the model, so I removed these from the dataset, using the `tidyverse` approach described [here](https://stackoverflow.com/questions/12454487/remove-columns-from-dataframe-where-some-of-values-are-na/12454779). 
+There are several variables with a high number of `NAs` or `#DIV/0!`. These are obviously a problem for fitting the model, so I removed these from the dataset, using the `tidyverse` approach described [here](https://stackoverflow.com/questions/12454487/remove-columns-from-dataframe-where-some-of-values-are-na/12454779).
 
 ```{r}
 trainClean <- train %>%
@@ -138,9 +161,9 @@ trainClean <- train %>%
 
 This leaves the database (`trainclean`) with `r dim(trainClean)[2]` columns.
 
-Because there is a large number of variables, some may correlate strongly with each other. This is precisely the case. 
+Because there is a large number of variables, some may correlate strongly with each other. This is the case.
 
-```{r}
+```{r corrplot, fig.cap = "Correlation matrix heatmap."}
 #Create data frame only with numeric predictors
 trainCleanCorr <- trainClean %>%
    select_if(function(x) is.numeric(x))
@@ -155,11 +178,14 @@ ggcorrplot(cor(trainCleanCorr),
   theme(legend.position = "right")
 ```
 
-## Further divide training dataset into training and testing sets 
+## Further divide *clean* training dataset into training and testing sets
 
-To get both in and out of sample errors, I divided the training dataset (`trainClean`)
+To be able to calculate both in and out of sample errors, I divided the training dataset (`trainClean`) into further training (`trainTrain`; 70% of the cases) and testing (`trainTest`; 30% of the cases) datasets.
 
 ```{r}
+#seed
+set.seed(17)
+#Data partition
 inTrain <- createDataPartition(y = trainClean$classe,
                                p = 0.7,
                                list = FALSE)
@@ -167,145 +193,244 @@ trainTrain <- trainClean[inTrain,]
 trainTest <- trainClean[-inTrain,]
 ```
 
-## Model
+## Training Models
 
-```{r model, cache=TRUE}
-#Specify trControl options with cross validation ("cv")
-set.seed(123)
+### Model 1: with PCA pre-processing
 
-library(doParallel)
+Because some predictor variables correlate strongly (see Fig. \@ref(fig:corrplot)), I attempted a model with PCA pre-processing (which has 24 PCs).
+
+```{r model1, cache = TRUE}
+#seed
+set.seed(17)
+
+#Start parallel processing
 cl <- makePSOCKcluster(5)
 registerDoParallel(cl)
 
+#Specify trainControl options with cross validation ("cv")
 start.time <- proc.time()
-m <- train(classe ~.,
+m1 <- train(classe ~.,
            data = trainTrain,
-           preProc=c("center", "scale"),
+           preProc = "pca",
            method = "rf",
-           #prox = TRUE,
            trControl = trainControl(method = "cv", 5))
 stop.time <- proc.time()
 run.time <- stop.time - start.time
 
+#End parallel processing
 stopCluster(cl)
-
-m
 ```
 
-Fitting the model took `r print(run.time[3])` seconds. 
+#### Model 1 summary
 
-(667.22 without prox = TRUE)
+```{r}
+m1
+```
+
+### Model 2: with simple centre and scaling pre-processing
+
+In addition, and for comparison, I fitted an equivalent model, but with simple centre and scaling pre-processing, instead of PCA.
+
+```{r model2, cache = TRUE}
+#seed
+set.seed(17)
+
+#Start parallel processing
+cl <- makePSOCKcluster(5)
+registerDoParallel(cl)
+
+#Specify trainControl options with cross validation ("cv")
+start.time2 <- proc.time()
+m2 <- train(classe ~.,
+           data = trainTrain,
+           preProc = c("center", "scale"),
+           method = "rf",
+           trControl = trainControl(method = "cv", 5))
+stop.time2 <- proc.time()
+run.time2 <- stop.time2 - start.time2
+
+#End parallel processing
+stopCluster(cl)
+```
+
+#### Model 2 summary
+
+```{r}
+m2
+```
 
 ### Variable importance
 
-```{r fig.height=8}
-imp.df <- varImp(m)$importance
+Variable importance is reported in Fig. \@ref(fig:importance), for both models.
 
-ggplot(imp.df, aes(x = reorder(row.names.data.frame(imp.df), Overall),
-                   y = Overall,
-                   fill = Overall)) +
+```{r  importance, fig.cap = "Variable importance for both models. (A) Model 1 (PCA pre-processing). (B) Model 2 (centring and scaling pre-processing).", fig.height = 8}
+imp.m1 <- varImp(m1)$importance
+imp.m2 <- varImp(m2)$importance
+
+p1 <- ggplot(imp.m1, aes(x = reorder(row.names.data.frame(imp.m1), Overall),
+                         y = Overall,
+                         fill = Overall)) +
   geom_bar(stat="identity", position="dodge") +
   coord_flip() +
   ylab("Variable Importance") +
   xlab("") +
-  ggtitle("Information Value Summary") +
+  ggtitle("Model 1") +
   scale_fill_gradient(low="blue", high="red") +
   theme_pubclean() +
   theme(legend.position = "right")
-```
 
-### Error
-
-#### In and out of sample error
-
-```{r}
-trError <- confusionMatrix(trainTrain$classe,
-                           predict(m, trainTrain))
-tsError <- confusionMatrix(trainTest$classe,
-                           predict(m, trainTest))
-
-kable(cbind(trError$table, tsError$table),
-      booktabs = TRUE,
-      align = "c",
-      caption = "In and out of sample error") %>%
-        kable_styling(full_width = FALSE) %>%
-        add_header_above(c(" " = 1, 
-                           "In sample error" = 5, 
-                           "Out of sample error" = 5))
-```
-
-
-
-```{r fig.cap="Confusion matrix for training and testing samples.", fig.height=4}
-
-# From https://www.jtimm.net/2018/11/15/text-classification-naive-bayes/
-p1 <- ggplot(data = as.data.frame(trError$table),
-             aes(x = Reference, y = Prediction)) +
-  geom_tile(aes(fill = log(Freq)),
-            colour = "white") +
-  scale_fill_gradient(low = "blue", 
-                      high = "red") +
-  geom_text(aes(x = Reference, 
-                y = Prediction, 
-                label = Freq)) +
-  theme(legend.position = "none",
-        axis.text.x=element_text(angle=45,
-                                 hjust=1)) + 
-  labs(subtitle = "In sample error") +
-  theme_pubclean()
-
-p2 <- ggplot(data = as.data.frame(tsError$table),
-             aes(x = Reference, y = Prediction)) +
-  geom_tile(aes(fill = log(Freq)),
-            colour = "white") +
-  scale_fill_gradient(low = "blue", 
-                      high = "red") +
-  geom_text(aes(x = Reference, 
-                y = Prediction, 
-                label = Freq)) +
-  theme(legend.position = "none",
-        axis.text.x=element_text(angle=45,
-                                 hjust=1)) + 
-  labs(subtitle="Out of sample error") +
-  theme_pubclean()
+p2 <- ggplot(imp.m2, aes(x = reorder(row.names.data.frame(imp.m2), Overall),
+                         y = Overall,
+                         fill = Overall)) +
+  geom_bar(stat="identity", position="dodge") +
+  coord_flip() +
+  ylab("Variable Importance") +
+  xlab("") +
+  ggtitle("Model 2") +
+  scale_fill_gradient(low="blue", high="red") +
+  theme_pubclean() +
+  theme(legend.position = "right")
 
 ggarrange(p1, p2,
           ncol = 2,
+          widths = c(1,1.3),
           common.legend = TRUE,
           labels = "AUTO",
           legend = "right")
 ```
 
+### Comparison of the two models
 
+To compare the two models, I used a confusion matrix for each model, both in and out of sample, as well as accuracy.
 
-```{r eval = FALSE}
-imp.dfOrder <- data.frame(imp.df)
+#### Confusion matrix
 
-imp1 <- which.max(imp.dfOrder$Overall)
-n <- length(unique(imp.dfOrder$Overall))
-imp2 <- which(imp.dfOrder$Overall == sort(unique(imp.dfOrder$Overall),
-                                  partial = n-1)[n-1])
-mostImp <- c(imp1, imp2)
+Figure \@ref(fig:confmats) shows the number of predicted cases in each category (`classe`) against the true categories. This illustrates how, while both Model 1 and Model 2 are perfectly accurate in the training (`trainTrain`) sample, as shown by the in sample confusion matrices (Fig. \@ref(fig:confmats)A, C), Model 2 is more accurate in the testing (`trainTest`) sample (Fig. \@ref(fig:confmats)D) than Model 1 (Fig. \@ref(fig:confmats)B).
 
+```{r confmats, fig.cap = "Confusion matrix for training and testing samples. This Figure shows the number of predicted cases in each category (classe) against the true categories, for both models (top row: Model 1; bottom row: Model 2), and both in (left pannels) and out of sample (right pannels). (A) Model 1, in sample. (B) Model 1, out of sample. (C) Model 2, in sample. (D) Model 2, out of sample.", fig.height=8}
+#In sample confusion matrix model 1
+trError.m1 <- confusionMatrix(trainTrain$classe,
+                              predict(m1, trainTrain))
+#Out of sample confusion matrix model 1
+tsError.m1 <- confusionMatrix(trainTest$classe,
+                              predict(m1, trainTest))
+#In sample confusion matrix model 2
+trError.m2 <- confusionMatrix(trainTrain$classe,
+                              predict(m2, trainTrain))
+#Out of sample confusion matrix model 2
+tsError.m2 <- confusionMatrix(trainTest$classe,
+                              predict(m2, trainTest))
 
-row.names(imp.dfOrder)[imp1]
-
-classeP <- classCenter(trainClean[,mostImp],
-                       trainClean$classe,
-                       m$finalModel$prox)
-classeP <- as.data.frame(classeP)
-classeP$classe <- rownames(classeP)
-
-ggplot(trainTrain, aes_string(x = row.names(imp.dfOrder)[imp1],
-                              y = row.names(imp.dfOrder)[imp2])) +
-  geom_point(aes(colour = classe),
-             alpha = 0.1) +
-  geom_point(aes(fill = classe),
-             color = "black",
-             size = 4,
-             shape = 21,
-             data = classeP) +
+# Confusion matrix as plot (From https://www.jtimm.net/2018/11/15/text-classification-naive-bayes/)
+p3 <- ggplot(data = as.data.frame(trError.m1$table),
+             aes(x = Reference, y = Prediction)) +
+  geom_tile(aes(fill = log(Freq)),
+            colour = "white") +
+  scale_fill_gradient(low = "blue", 
+                      high = "red") +
+  geom_text(aes(x = Reference, 
+                y = Prediction, 
+                label = Freq)) +
+  theme(legend.position = "none",
+        axis.text.x=element_text(angle=45,
+                                 hjust=1)) + 
+  labs(title = "Model 1",
+       subtitle = "In sample") +
   theme_pubclean()
+
+p4 <- ggplot(data = as.data.frame(tsError.m1$table),
+             aes(x = Reference, y = Prediction)) +
+  geom_tile(aes(fill = log(Freq)),
+            colour = "white") +
+  scale_fill_gradient(low = "blue", 
+                      high = "red") +
+  geom_text(aes(x = Reference, 
+                y = Prediction, 
+                label = Freq)) +
+  theme(legend.position = "none",
+        axis.text.x=element_text(angle=45,
+                                 hjust=1)) + 
+  labs(title = " ",
+       subtitle="Out of sample") +
+  theme_pubclean()
+p5 <- ggplot(data = as.data.frame(trError.m2$table),
+             aes(x = Reference, y = Prediction)) +
+  geom_tile(aes(fill = log(Freq)),
+            colour = "white") +
+  scale_fill_gradient(low = "blue", 
+                      high = "red") +
+  geom_text(aes(x = Reference, 
+                y = Prediction, 
+                label = Freq)) +
+  theme(legend.position = "none",
+        axis.text.x=element_text(angle=45,
+                                 hjust=1)) + 
+  labs(title = "Model 2",
+       subtitle = "In sample error") +
+  theme_pubclean()
+
+p6 <- ggplot(data = as.data.frame(tsError.m2$table),
+             aes(x = Reference, y = Prediction)) +
+  geom_tile(aes(fill = log(Freq)),
+            colour = "white") +
+  scale_fill_gradient(low = "blue", 
+                      high = "red") +
+  geom_text(aes(x = Reference, 
+                y = Prediction, 
+                label = Freq)) +
+  theme(legend.position = "none",
+        axis.text.x=element_text(angle=45,
+                                 hjust=1)) + 
+  labs(title = " ",
+       subtitle="Out of sample error") +
+  theme_pubclean()
+
+ggarrange(p3, p4, p5, p6,
+          ncol = 2,
+          nrow = 2,
+          common.legend = TRUE,
+          labels = "AUTO",
+          legend = "right")
+```
+
+#### Accuracy
+
+To further illustrate the difference in accuracy between the two models, and make a final decision of which model to select, I compared the accuracy of the two models.
+
+```{r errors}
+t1 <- cbind(data.frame(trError.m1$overall), 
+            data.frame(trError.m2$overall),
+            data.frame(tsError.m1$overall), 
+            data.frame(tsError.m2$overall))
+row.names(t1) <- c("Accuracy",
+                   "Kappa",
+                   "Lower 95% CI",
+                   "Upper  95% CI",
+                   "AccuracyNull",
+                   "*p*",
+                   "McnemarPValue")
+t1 <- t1[c(1,3,4,2,6),]
+
+kable(t1,
+      booktabs = TRUE,
+      digits = 4,
+      col.names = rep(c("Model 1", "Model 2"), times = 2),
+      caption = "Accuracy, kappa statistic and significance of Models 1 and 2, both in and out of sample") %>%
+  kable_styling(full_width = FALSE) %>%
+  add_header_above(c(" " = 1,
+                     "In sample" = 2,
+                     "Out of sample" = 2))
+  
+```
+
+This shows that while the in sample accuracy was the same for both models (both classified correctly all cases), the out of sample accuracy was better in Model 2 (Accuracy = `r round(t1$tsError.m2.overall[1], 3)`, 95% CI[`r paste0(round(t1$tsError.m2.overall[2], 3), " - ", round(t1$tsError.m2.overall[3], 3))`], kappa = `r round(t1$tsError.m2.overall[4], 3)`, *p* \< 0.0001) than in Model 1 (Accuracy = `r round(t1$tsError.m1.overall[1], 3)`, 95% CI[`r paste0(round(t1$tsError.m1.overall[2], 3), " - ", round(t1$tsError.m1.overall[3], 3))`], kappa = `r round(t1$tsError.m1.overall[4], 3)`, *p* \< 0.0001).
+
+## Course Project Prediction Quiz
+
+Model 2 was the most accurate. Based on this model, I predicted the `classe` for each case on the original testing dataset, to be submitted for automatic grading.
+
+```{r}
+predict(m2, testing)
 ```
 
 # References
