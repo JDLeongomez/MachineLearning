@@ -1,1 +1,1 @@
-# MachineLearning
+This repo contains a webpage with the final curse project from the Practical Machine Learning by Johns Hopkins University. The published page is available at https://jdleongomez.github.io/MachineLearningProject/.
