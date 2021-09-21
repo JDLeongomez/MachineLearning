@@ -1,0 +1,841 @@
+---
+title: "Week 4: Regularized Regression and Combining Predictors"
+subtitle: "**Lectures^[All lectures by [Jeffrey Leek](http://jtleek.com/) (John Hopkins Bloomberg Scool of Public Health).] :** 1. Regularized regression, 2. Combining predictors, 3. Forecasting, 4. Unsupervised Prediction"
+author: "[Juan David Leongómez](https://jdleongomez.info)"
+date: "`r Sys.setlocale('LC_TIME','English');format(Sys.Date(),'%d %B, %Y')`"
+output:
+  bookdown::pdf_document2:
+    toc: true
+    fig_caption: yes
+    highlight: zenburn
+    number_sections: yes
+    toc_depth: '5'
+header-includes: \usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \usepackage[dvipsnames]{xcolor}
+  \definecolor{mygray}{gray}{0.8}
+  \usepackage{float}
+  \floatplacement{figure}{H}
+editor_options: 
+  chunk_output_type: console
+csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl
+bibliography: Bibliography.bib
+urlcolor: blue
+link-citations: true
+linkcolor: red
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(kableExtra)
+knitr::opts_chunk$set(echo = TRUE)
+opts_chunk$set(fig.width = 6, fig.height = 4, fig.pos = "H")
+```
+
+------------------------------------------------------------------------
+
+# **Lecture 1**: Regularized regression
+
+This lecture is about Regularized regression. We learned about linear regression and generalized linear regression previously.
+
+## Basic idea
+
+1.  Fit a regression model
+2.  Penalize (or shrink) large coefficients
+
+**Pros:**
+
+-   Can help with the bias/variance tradeoff
+-   Can help with model selection
+
+**Cons:**
+
+-   May be computationally demanding on large data sets
+
+-   Does not perform as well as random forests and boosting (when applied to prediction in the wild;
+
+    for example, in [Kaggle](https://www.kaggle.com/) competitions)
+
+## A motivating example
+
+$$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \epsilon$$
+
+where $X_1$ and $X_2$ are nearly perfectly correlated (co-linear). You can approximate this model by:
+
+$$Y = \beta_0 + (\beta_1 + \beta_2)X_1 + \epsilon$$
+
+**Note:** it will not be exactly right, because $X1$ and $X2$ are not exactly the same variable. But it will be very close to right, if $X1$ and $X2$ are very similar to each other.
+
+The result is:
+
+-   You will get a good estimate of $Y$
+-   The estimate (of $Y$) will be biased
+-   It may reduce variance in the estimate
+
+## Subset selection
+
+Suppose we predict with all possible combinations of predictor variables. For the outcome where we build one regression model for every possible combination of vectors. As the number of predictors increases from left to right here, the training set error always goes down. As you include more predictors, the training set error will always decrease.
+
+But this is a typical pattern of what you observe with real data, that the test set data on the other hand, as the number of predictors increases, the test set error goes down, which is good.
+
+But then eventually it hits a plateau, and it starts to go back up again. This is because we're overfitting the data in the training set, and eventually, we may not want to include so many predictors in our model.
+
+### Most common pattern
+
+This is an incredibly common pattern (see Fig. \@ref(fig:trainingandtest)).
+
+In the training set almost always the error goes monotonically down (i.e. as you build more and more complicated models, the training error will always decrease). But on a testing set, the error will decrease for a while, eventual hit a minimum. And then, start to increase again as the model gets too complex and over fits the data.
+
+```{r trainingandtest, fig.align="center", fig.cap = "Comon pattern fro the association between model complexity and the expected Residual Sum of Squares (RSS). See \\url{http://www.biostat.jhsph.edu/~ririzarr/Teaching/649/}.", out.width = "100%"}
+knitr::include_graphics("trainingandtest.png")
+```
+
+#### Prostate cancer example
+
+This can be seen in other examples (see Fig. \@ref(fig:prostate); Code [here](http://www.cbcb.umd.edu/~hcorrada/PracticalML/src/selection.R)).
+
+```{r prostate, fig.align="center", fig.cap = "Prostate cancer data.", out.width = "100%"}
+library(ElemStatLearn)
+
+data(prostate)
+str(prostate)
+
+knitr::include_graphics("prostate.png")
+```
+
+## Model selection approach: split samples
+
+-   No method better when data/computation time permits it
+
+-   Approach
+
+    1.  Divide data into training/test/validation
+    2.  Treat validation as test data, train all competing models on the train data and pick the best one on validation.
+    3.  To appropriately assess performance on new data apply to test set
+    4.  You may re-split and perform steps 1-3 again
+
+-   Two common problems
+
+    -   Limited data
+    -   Computational complexity
+
+<http://www.biostat.jhsph.edu/~ririzarr/Teaching/649/>
+
+<http://www.cbcb.umd.edu/~hcorrada/PracticalML/>
+
+### Decomposing expected prediction error
+
+Another approach is to try to decompose the prediction error, and see if there is another way that we can work directly get at including only the variable that need to be included in the model.
+
+If we assume that the variable $Y$ can be predicted as a function of $X$, plus some error term: $Y_i = f(X_i) + \epsilon_i$
+
+Then the expected prediction error is the expected difference between the outcome and the prediction of the outcome squared: $EPE(\lambda) = E\left[\{Y - \hat{f}_{\lambda}(X)\}^2\right]$
+
+Suppose $\hat{f}_{\lambda}$ is the estimate from the training data and look at a new data point $X = x^*$
+
+$$E\left[\{Y - \hat{f}_{\lambda}(x^*)\}^2\right] = \sigma^2 + \{E[\hat{f}_{\lambda}(x^*)] - f(x^*)\}^2 + var[\hat{f}_\lambda(x_0)]$$
+
+$$
+= Irreducible error + Bias^2 + Variance
+$$
+
+<http://www.biostat.jhsph.edu/~ririzarr/Teaching/649/> <http://www.cbcb.umd.edu/~hcorrada/PracticalML/>
+
+## Another issue for high-dimensional data
+
+Just a simple example of what happens when you have a lot of predictors.
+
+So here I'm sub-setting just a small subset of the prostate data. Imagine that I only had five observations in my training set (It has more than five predictor variables).
+
+So I fit a linear model relating the outcome to all of these predictor variables. Because there are more than five, some of them will get estimates (NA).
+
+```{r}
+small <- prostate[1:5,]
+
+lm(lpsa ~.,
+   data = small)
+```
+
+In other words, R won't be able to estimate them because you have more predictors than you have samples. You have, design matrix that cannot be inverted.
+
+## Hard **thresholding**
+
+-   Model $Y = f(X) + \epsilon$
+
+-   Set $\hat{f}_{\lambda}(x) = x'\beta$
+
+-   Constrain only $\lambda$ coefficients to be non-zero.
+
+-   Selection problem is after choosing $\lambda$ figure out which $p - \lambda$ coefficients to make non-zero
+
+## Regularization for regression
+
+If the $\beta_j$'s are unconstrained: \* They can explode \* And hence are susceptible to very high variance
+
+To control variance, we might regularize/shrink the coefficients.
+
+$$ PRSS(\beta) = \sum_{j=1}^n (Y_j - \sum_{i=1}^m \beta_{1i} X_{ij})^2 + P(\lambda; \beta)$$
+
+where $PRSS$ is a penalized form of the sum of squares. Things that are commonly looked for
+
+-   Penalty reduces complexity
+-   Penalty reduces variance
+-   Penalty respects structure of the problem
+
+### Ridge regression
+
+Solve:
+
+$$ \sum_{i=1}^N \left(y_i - \beta_0 + \sum_{j=1}^p x_{ij}\beta_j \right)^2 + \lambda \sum_{j=1}^p \beta_j^2$$
+
+equivalent to solving
+
+$\sum_{i=1}^N \left(y_i - \beta_0 + \sum_{j=1}^p x_{ij}\beta_j \right)^2$ subject to $\sum_{j=1}^p \beta_j^2 \leq s$ where $s$ is inversely proportional to $\lambda$
+
+Inclusion of $\lambda$ makes the problem non-singular even if $X^TX$ is not invertible.
+
+**Ridge coefficient paths**
+
+For every different choice of $\lambda$, that penalized regression problem on the previous page, as gambit increases.
+
+That means that we penalize the big $\lambda$ more and more.
+
+So we start off with the betas being equal to a certain of values here when $\lambda = 0$. That's just a standard linear with regression values. And as you increase lambda, all of the coefficients get closer to 0.
+
+```{r ridgepath, fig.align="center", fig.cap = "Association between $\\lambda$ and coefficients in regularised regression.", out.width = "100%"}
+knitr::include_graphics("ridgepath.png")
+```
+
+#### Tuning parameter $\lambda$
+
+-   $\lambda$ controls the size of the coefficients
+-   $\lambda$ controls the amount of {\bf regularization}
+-   As $\lambda \rightarrow 0$ we obtain the least square solution
+-   As $\lambda \rightarrow \infty$ we have $\hat{\beta}_{\lambda=\infty}^{ridge} = 0$
+
+### Lasso
+
+$\sum_{i=1}^N \left(y_i - \beta_0 + \sum_{j=1}^p x_{ij}\beta_j \right)^2$ subject to $\sum_{j=1}^p |\beta_j| \leq s$
+
+also has a *lagrangian* form
+
+$$ \sum_{i=1}^N \left(y_i - \beta_0 + \sum_{j=1}^p x_{ij}\beta_j \right)^2 + \lambda \sum_{j=1}^p |\beta_j|$$
+
+For orthonormal design matrices (not the norm!) this has a closed form solution
+
+$$\hat{\beta}_j = sign(\hat{\beta}_j^0)(|\hat{\beta}_j^0 - \gamma)^{+}$$
+
+but not in general.
+
+<http://www.biostat.jhsph.edu/~ririzarr/Teaching/649/> <http://www.cbcb.umd.edu/~hcorrada/PracticalML/>
+
+## Notes and further reading
+
+-   [Hector Corrada Bravo's Practical Machine Learning lecture notes](http://www.cbcb.umd.edu/~hcorrada/PracticalML/)
+
+-   [Hector's penalized regression reading list](http://www.cbcb.umd.edu/~hcorrada/AMSC689.html#readings)
+
+-   [Elements of Statistical Learning](http://statweb.stanford.edu/~tibs/ElemStatLearn/) [@hastieElementsStatisticalLearning2009]
+
+-   In `caret` methods are:
+
+    -   `ridge`
+    -   `lasso`
+    -   `relaxo`
+
+------------------------------------------------------------------------
+
+# **Lecture 2**: Combining predictors (**ensembling**)
+
+This lecture is about combining predictors (sometimes called **ensembling methods** in learning).
+
+## Key ideas
+
+-   You can **combine classifiers by averaging/voting**
+
+    -   these can be classifiers that are very different; for example you can combine a boosting classifier with a random forest with a linear regression model
+
+-   Combining classifiers **improves accuracy**
+
+-   Combining classifiers **reduces interpretability**
+
+-   Boosting, bagging, and random forests are variants on this theme
+
+### Example: Netflix prize
+
+BellKor = Combination of 107 predictors
+
+```{r netflix, fig.align="center", fig.cap = "BellKor combined 107 predictors to produce the most accurate predictin of viewers' preferences and will the 1 million-dollar prize. See \\url{https://www.netflixprize.com/leaderboard.html}.", out.width = "100%"}
+knitr::include_graphics("netflix.png")
+```
+
+### Example: **Heritage health prize - Progress Prize 1**
+
+The Heritage Health prize was a \$3 million prize. It was designed to try to predict whether people would go back to the hospital based on their hospitalization record.
+
+[**Market Makers**](https://kaggle2.blob.core.windows.net/wiki-files/327/e4cd1d25-eca9-49ca-9593-b254a773fe03/Market%20Makers%20-%20Milestone%201%20Description%20V2%201.pdf)
+
+```{r makers, fig.align="center", fig.cap = "Market Makers.", out.width = "100%"}
+knitr::include_graphics("makers.png")
+```
+
+[**Mestrom**](https://kaggle2.blob.core.windows.net/wiki-files/327/09ccf652-8c1c-4a3d-b979-ce2369c985e4/Willem%20Mestrom%20-%20Milestone%201%20Description%20V2%202.pdf)
+
+```{r mestrom, fig.align="center", fig.cap = "Mestrom.", out.width = "100%"}
+knitr::include_graphics("mestrom.png")
+```
+
+## Basic intuition - majority vote
+
+Suppose we have 5 completely independent classifiers
+
+If accuracy is 70% for each: \* $10\times(0.7)^3(0.3)^2 + 5\times(0.7)^4(0.3)^2 + (0.7)^5$ \* 83.7% majority vote accuracy
+
+With 101 independent classifiers \* 99.9% majority vote accuracy
+
+## Approaches for combining classifiers
+
+1.  Bagging, boosting, random forests
+
+    -   Usually combine similar classifiers
+
+<!-- -->
+
+2.  Combining different classifiers
+
+    -   Model stacking
+
+    -   Model ensembling
+
+## Example: `Wage` data
+
+**Create training, test and validation sets**
+
+```{r wage, cache = TRUE}
+library(ISLR)
+data(Wage)
+
+library(ggplot2)
+library(caret)
+
+Wage <- subset(Wage,
+               select = -c(logwage)) #logwage is too similar to wage
+
+# Create a building data set and validation set
+inBuild <- createDataPartition(y = Wage$wage,
+                               p = 0.7, 
+                               list=FALSE)
+validation <- Wage[-inBuild,]
+buildData <- Wage[inBuild,]
+inTrain <- createDataPartition(y = buildData$wage,
+                               p = 0.7, 
+                               list=FALSE)
+# Create traininf and testing data sets from the building set
+training <- buildData[inTrain,]
+testing <- buildData[-inTrain,]
+
+dim(training)
+dim(testing)
+dim(validation)
+```
+
+### Build 2 different models
+
+```{r mods, cache = TRUE}
+mod1 <- train(wage ~.,
+              meyhod = "glm",
+              data = training)
+mod2 <- train(wage ~.,
+              meyhod = "rf",
+              data = training,
+              trControl = trainControl(method = "cv"),
+              number = 3)
+```
+
+### Predict on the testing set
+
+Both models predictions are close to each other, but they do not perfectly agree with each other (much less in the lecture example).
+
+And, neither of them perfectly correlates with the wage variable, which is the colour of the dots in Fig \@ref(fig:modcomp).
+
+```{r modcomp, fig.cap = "Association between model 1 and model 2.", results = "Hold"}
+pred1 <- predict(mod1, testing)
+pred2 <- predict(mod2, testing)
+
+library(ggpubr)
+
+ggplot(testing, aes(x = pred1, y = pred2, colour = wage)) +
+  geom_point(alpha = 0.3) +
+  stat_cor(aes(label = paste(..rr.label..,
+                             cut(..p..,
+                                 breaks = c(-Inf, 
+                                            0.0001, 
+                                            0.001, 
+                                            0.01, 
+                                            0.05, 
+                                            Inf),
+                                 labels = c("'****'", 
+                                            "'***'", 
+                                            "'**'", 
+                                            "'*'", 
+                                            "''")),
+                             sep = "~")),
+           label.y.npc = 0.9,
+           color = "black") +
+  theme_pubclean()
+```
+
+### Combining predictors
+
+Create a data frame that combines the predictions from both models, and fit a new model from the predictions of the original models.
+
+```{r}
+library(caret)
+predDF <- data.frame(pred1, pred2, wage = testing$wage)
+
+combModFit <- train(wage ~.,
+                    meyhod = "gam",
+                    data = predDF)
+combPred <- predict(combModFit, predDF)
+```
+
+### Testing errors
+
+The error of the combined model, has a smaller error than any of the two models.
+
+```{r}
+sqrt(sum((pred1-testing$wage)^2))
+sqrt(sum((pred2-testing$wage)^2))
+sqrt(sum((combPred-testing$wage)^2))
+```
+
+### **Predict on validation data set**
+
+```{r}
+pred1V <- predict(mod1,validation)
+pred2V <- predict(mod2,validation)
+predVDF <- data.frame(pred1 = pred1V,
+                      pred2 = pred2V)
+combPredV <- predict(combModFit, predVDF)
+```
+
+### **Evaluate on validation**
+
+This should be smaller using the combined model (it is on the lecture), but not in this case.
+
+```{r}
+sqrt(sum((pred1V-validation$wage)^2))
+sqrt(sum((pred2V-validation$wage)^2))
+sqrt(sum((combPredV-validation$wage)^2))
+```
+
+## Notes and further resources
+
+-   Even simple blending can be useful
+
+-   Typical model for binary/multiclass data
+
+    -   Build an odd number of models
+    -   Predict with each model
+    -   Predict the class by majority vote
+
+-   This can get dramatically more complicated
+
+    -   Simple blending in caret: [caretEnsemble](https://github.com/zachmayer/caretEnsemble) (use at your own risk!)
+    -   Wikipedia [ensemble learning](http://en.wikipedia.org/wiki/Ensemble_learning)
+
+------------------------------------------------------------------------
+
+## Recall - scalability matters
+
+A problem with ensembling is that this can lead to increases in computational complexity.
+
+So it turns out that even though Netflix paid a million dollars to the team that won the prize, the Netflix million-dollar solution was never actually implemented, because it was too computational intensive to apply to specific data sets.
+
+```{r netflixno, fig.align="center", fig.cap = "The Netflix million-dollar solution was never actually implemented.", out.width = "100%"}
+knitr::include_graphics("netflixno.png")
+```
+
+<http://www.techdirt.com/blog/innovation/articles/20120409/03412518422/>
+
+<http://techblog.netflix.com/2012/04/netflix-recommendations-beyond-5-stars.html>
+
+------------------------------------------------------------------------
+
+# **Lecture 3**: Forecasting
+
+This lecture is about forecasting, which is a very specific kind of prediction problem. And it's typically applied to things like time series data.
+
+For example, this is the stock of information for Google on the NASDAQ. You can see over time that there's a price for this stock and it goes up and down (see Fig. \@ref(fig:goog)). This introduces some very specific kinds of dependent structure and some additional challenges that must be taken into account when performing prediction.
+
+```{r goog, fig.align="center", fig.cap = "Example of time series data. See \\url{https://www.google.com/finance}.", out.width = "100%"}
+knitr::include_graphics("GOOG.png")
+```
+
+## What is different?
+
+-   Data are dependent over time
+
+    -   More challenging than when you have independent examples
+
+-   Specific pattern types
+
+    -   Trends - long term increase or decrease
+    -   Seasonal patterns - patterns related to time of week, month, year, etc.
+    -   Cycles - patterns that rise and fall periodically (over a period that's longer than a year, for example)
+
+-   Subsampling into training/test is more complicated
+
+    -   you can't just randomly assign samples into training and test. You have to take advantage of the fact that there's actually specific times that are being sampled and that points are dependent in time
+
+-   Similar issues arise in spatial data
+
+    -   Dependency between nearby observations
+    -   Location specific effects
+
+-   Typically goal is to predict one or more observations into the future
+
+-   All standard predictions can be used (with caution!)
+
+## **Beware spurious correlations!**
+
+One thing to be aware of is that you have to be careful of spurious correlations: time series can often be correlate for reasons that do not make them good for predicting one from the other (e.g. Fig. \@ref(fig:spurious)).
+
+```{r spurious, fig.align="center", fig.cap = "Example of spurious correlation in time series data. See \\url{http://www.google.com/trends/correlate}.", out.width = "100%"}
+knitr::include_graphics("spurious.jpg")
+```
+
+### Also common in geographic analyses
+
+Fig \@ref(fig:heatmap) is a cartoon from [*xkcd*](http://xkcd.com/1138/) that shows that heat maps particularly population-based heat maps had very similar shapes because of the place where many people live.
+
+```{r heatmap, fig.align="center", fig.cap = "Example of spurious correlation in time series data. See \\url{http://www.google.com/trends/correlate}.", out.width = "50%"}
+knitr::include_graphics("heatmap.png")
+```
+
+For example, the users of a particular site or the subscribers to a particular magazine or the consumers of a particular type of website may all appear in the very similar places because the highest density in population in the United States.
+
+## **Beware extrapolation!**
+
+Fig. \@ref(fig:extrapolation) [Fig. 1 from @tatemMomentousSprint21562004] is a kind of a funny example that shows what happens if you extrapolate time series out without being careful about what could happen.
+
+```{r extrapolation, fig.align="center", fig.cap = "Example of a ridiculuos extrapolation of a long scale the winning time of a large number of races that occurred at the Olympics. The \textcolor{blue}{blue} times are men and the \textcolor{red}{red} times are women. Taken from Tatem et al. (2004).", out.width = "100%"}
+knitr::include_graphics("extrapolation.jpg")
+```
+
+The authors of this paper extrapolated out into the future and said that in 2156 that would be when women would run faster than men in the sprint. And while we don't know when that may or may not occur, one thing that was pointed out is that this kind of extrapolation is very dangerous.
+
+Eventually at some time in the future, both men and women will be predicted to run negative times for the 100 meters.
+
+## Example: Google data
+
+Example of some forecasting using the `quantmod` package and some Google data.
+
+If I load this `quantmod` package and I can load in a bunch of data from the Google stock symbol, and from the Google finance data set.
+
+So, if I look at this Google variable, I get the open, high, low, close, and volume information for a particular Google stock from the 1st of January, 2008 to December 31st, 2013.
+
+```{r loadGOOG}
+library(quantmod)
+from.dat <- as.Date("01/01/08", format = "%m/%d/%y")
+to.dat <- as.Date("12/31/13", format = "%m/%d/%y")
+getSymbols("GOOG", src = "yahoo", from = from.dat, to = to.dat)
+getSymbols("GOOGL", src = "yahoo", from = from.dat, to = to.dat)
+GOOG <- GOOG + GOOGL
+GOOG$GOOG.Volume <- GOOGL$GOOGL.Volume/2 
+head(GOOG)
+```
+
+### Summarise monthly and store as time series
+
+```{r tseries, dependson = "loadGOOG", fig.align="center", fig.cap = "Time series plot .", fig.height = 4, fig.width = 4}
+mGoog <- to.monthly(GOOG)
+googOpen <- Op(mGoog)
+ts1 <- ts(googOpen, frequency = 12)
+plot(ts1, xlab = "Years+1", ylab = "GOOG")
+```
+
+Plotting time series in \`ggplot2\`.
+
+```{r tseriesgg, fig.cap = "Time series plot in \\texttt{ggplot2}.", results = "Hold"}
+library(ggplot2)
+mGoog2 <- as.data.frame(GOOG)
+mGoog2$date <- as.Date(row.names(mGoog2))
+ggplot(mGoog2, aes(x = date, y = GOOG.Open, colour = GOOG.Open)) +
+  geom_line() +
+  labs(x = "Year", y = "GOOG", color = "GOOG") +
+  theme_pubclean()
+```
+
+Or in `ggplot2`, by using `ggfortify::autoplot` (to use the exact same data as in Fig. \@ref(fig:tseries)) from a `ts` object.
+
+```{r tseriesggf, fig.cap = "Time series plot in \\texttt{ggplot2} using \\texttt{ggfortify}.", results = "Hold"}
+library(ggfortify)
+autoplot(ts1) +
+  theme_pubclean()
+```
+
+### Example time series decomposition
+
+For more info, check [\<https://www.otexts.org/fpp/6/1\>](https://www.otexts.org/fpp/6/1){.uri} [@hyndmanForecastingPrinciplesPractice2018]
+
+-   **Trend** - Consistently increasing pattern over time
+-   **Seasonal** - When there is a pattern over a fixed period of time that recurs.
+-   **Cyclic** - When data rises and falls over non fixed periods
+
+#### Decompose a time series into parts
+
+If I decompose this in an additive way, then I can see that there's a trend variable that appears to be an upward trend of the Google stock price (Figs. \@ref(fig:decomp) and \@ref(fig:decompgg)).
+
+There also appears to be a seasonal pattern, as well as a more of a random cyclical pattern in the data set. So this is decomposing this series here into a series of different types of patterns in the data.
+
+```{r decomp, fig.align="center", fig.cap = "Decomposed time series plot.", fig.height = 4, fig.width = 4}
+plot(decompose(ts1),xlab="Years+1")
+```
+
+Or in `ggplot2`, by using `autoplot`.
+
+```{r decompgg, fig.cap = "Decomposed time series plot in \\texttt{ggplot2}.", results = "Hold", fig.height = 4, fig.width = 4}
+ts1 %>%
+  decompose() %>%
+  autoplot() +
+  theme_pubclean()
+```
+
+### Training and test sets
+
+I have to build training and test sets that have consecutive time points. So here I am building a training set that starts at time point 1 and ends at time point 5. And then a test set that is the next consecutive sets of points after that.
+
+```{r trainingTest, dependson = "tseries", fig.height = 4.5, fig.width = 4.5}
+ts1Train <- window(ts1,start = 1, end = 5)
+ts1Test <- window(ts1, start = 5, end = (7-0.01))
+ts1Train
+```
+
+### Simple moving average
+
+$$ Y_{t}=\frac{1}{2*k+1}\sum_{j=-k}^k {y_{t+j}}$$
+
+```{r, dependson = "trainingTest", fig.cap = "Moving average plot in the training set.", results = "Hold", fig.height = 4.5, fig.width = 4.5}
+library(forecast)
+plot(ts1Train)
+lines(ma(ts1Train,order=3),col="red")
+```
+
+Or in `ggplot2`.
+
+```{r, dependson = "trainingTest", fig.cap = "Moving average plot in the training set in \\texttt{ggplot2}.", results = "Hold", fig.height = 4.5, fig.width = 4.5}
+ts1Train %>%
+  autoplot() +
+  geom_line(aes(y = ma(ts1Train, order = 3)),
+            color = "red") +
+  theme_pubclean()
+```
+
+### Exponential smoothing
+
+**Example - simple exponential smoothing**
+
+$$\hat{y}_{t+1} = \alpha y_t + (1-\alpha)\hat{y}_{t-1}$$
+
+Basically, we weight near-by time points as higher values or by more heavily than time points that are farther away.
+
+There is a large number of different classes of smoothing models that you can choose (Fig. \@ref(fig:expsmooth)):
+
+```{r expsmooth, fig.align="center", fig.cap = "Example of exponential smoothing. \\href{From https://www.otexts.org/fpp/7/6}.", out.width = "100%"}
+knitr::include_graphics("expsmooth.png")
+```
+
+```{r ets, fig.cap = "Exponential smoothing. Forecast on the training data set in blue, and forecast on the test data set in red.", fig.height = 4.5, fig.width = 4.5}
+ets1 <- ets(ts1Train, model = "MMM")
+fcast <- forecast(ets1)
+plot(fcast); lines(ts1Test, col = "red")
+```
+
+Or in `ggplot2`.
+
+```{r etsgg, fig.cap = "Exponential smoothing plot in \\texttt{ggplot2}. Forecast on the training data set in blue, and forecast on the test data set in red.", fig.height = 4.5, fig.width = 4.5}
+fcast %>%
+  autoplot() +
+  autolayer(ts1Test, color = "red") +
+  theme_pubclean() +
+  theme(legend.position = "none")
+```
+
+### Get the accuracy
+
+You can get the accuracy of your forecast using your test set, and it will give you root mean square to error and other metrics that are more appropriate for forecasting.
+
+```{r ,dependson="ets"}
+accuracy(fcast, ts1Test)
+```
+
+## Notes and further resources
+
+-   [Forecasting and timeseries prediction](http://en.wikipedia.org/wiki/Forecasting) is an entire field
+
+-   Rob Hyndman's [Forecasting: principles and practice](https://www.otexts.org/fpp/) is a good place to start [@hyndmanForecastingPrinciplesPractice2018]
+
+-   Cautions
+
+    -   Be wary of spurious correlations
+    -   Be careful how far you predict (extrapolation)
+    -   Be wary of dependencies over time
+
+-   See [quantmod](http://cran.r-project.org/web/packages/quantmod/quantmod.pdf) or [quandl](http://www.quandl.com/help/packages/r) packages for finance-related problems.
+
+------------------------------------------------------------------------
+
+# **Lecture 4**: Unsupervised Prediction
+
+So far, in the examples we have talked about, you know what the labels are. In other words, you're trying to do supervised classification: you're trying to predict an outcome that you know what it is.
+
+## Key ideas
+
+-   Sometimes you don't know the labels for prediction
+
+-   To build a predictor
+
+    -   Create clusters
+
+        -   It is not a perfectly noiseless process
+
+    -   Name clusters
+
+        -   Coming up with the right names (interpreting the clusters well) is an incredibly challenging problem
+
+    -   Build predictor for clusters
+
+        -   Using the algorithms that we have learned, as well as predicting on those clusters
+
+-   In a new data set
+
+    -   Predict clusters
+
+        -   (and apply the name that you come up with in the previous data set)
+
+## Example: Iris dataset ignoring species labels
+
+```{r iris}
+data(iris)
+library(ggplot2)
+library(caret)
+
+inTrain <- createDataPartition(y = iris$Species,
+                               p = 0.7, 
+                               list = FALSE)
+training <- iris[inTrain,]
+testing <- iris[-inTrain,]
+dim(training)
+dim(testing)
+```
+
+### Cluster with k-means
+
+I could perform a k-means clustering.
+
+If you remember that k-means clustering from the exploratory data analysis section of the data science specialization. And the basic idea here is to basically create three different clusters. So I was telling it to create three different clusters, ignoring the species information.
+
+Here, we will create 3 clusters, ignoring the species.
+
+```{r kmeans, fig.cap = "Comparison of k-clusterin prediction os Iris species, and actual species. \\textbf{A} Predicted clusters (species). \\textbf{B} Actual clusters (species)."}
+kMeans1 <- kmeans(subset(training,
+                         select= -c(Species)), #ignore the species
+                  centers = 3) #create 3 clusters
+
+training$clusters <- as.factor(kMeans1$cluster)
+
+panA <- qplot(x = Petal.Width, y = Petal.Length,
+              colour = clusters,
+              data = training) +
+  labs(title = "Predicted clustering (species) from k-means") +
+  theme_pubclean()
+
+panB <- qplot(x = Petal.Width, y = Petal.Length,
+              colour = Species,
+              data = training) +
+  labs(title = "Actual clustering (species)") +
+  theme_pubclean()
+
+ggarrange(panA, panB,
+          labels = "AUTO")
+```
+
+**Compare to real labels**
+
+I wouldn't know what those species names were, and I would have to come up with names for each of my clusters. However, in this case:
+
+-   Cluster 1 = versicolor
+-   Cluster 2 = setosa
+-   Cluster 3 = virginica
+
+```{r ,dependson="kmeans"}
+library(kableExtra)
+kable(table(kMeans1$cluster,
+            training$Species),
+      booktabs = TRUE,
+      row.names = TRUE) %>%
+  kable_styling(position = "center", 
+                latex_options = "HOLD_position")
+```
+
+### Build predictor
+
+Then I can fit a model that relates the cluster variable that I have created, to all the predictor variables in the training set.
+
+In this case, I am doing it with a classification tree (`method = "rpart"`). I can then do a prediction in a, a training set.
+
+```{r modelFit,dependson="kmeans"}
+modFit <- train(clusters ~.,
+                data = subset(training,
+                              select = -c(Species)),
+                method = "rpart")
+
+kable(table(predict(modFit,
+                    training),
+            training$Species),
+      booktabs = TRUE,
+      row.names = TRUE) %>%
+  kable_styling(position = "center", 
+                latex_options = "HOLD_position")
+```
+
+It did a reasonably good job of predicting clusters 1 and 2, but cluster 1 and cluster 3 sometimes get mix, mixed up (for virginica) in my prediction model.
+
+This is because I have both error or variation in my prediction building and error and variation in my cluster building, so it ends up being a quite a challenging problem to do unsupervised prediction in this way.
+
+### Apply on test
+
+If I predict on the test data set, in general I wouldn't know what the labels are, but here I'm showing what the labels are.
+
+```{r ,dependson="modFit"}
+testClusterPred <- predict(modFit,
+                           testing)
+
+kable(table(testClusterPred, 
+            testing$Species),
+      booktabs = TRUE,
+      row.names = TRUE) %>%
+  kable_styling(position = "center", 
+                latex_options = "HOLD_position")
+```
+
+Here I'm predicting on a new data set and making a table versus the actual known species. And so I can see this actually does quite a reasonable job here of predicting the different species into different clustered labels.
+
+## Notes and further reading
+
+-   The [`cl_predict`](https://www.rdocumentation.org/packages/clue/versions/0.3-58/topics/cl_predict) function in the [`clue`](https://www.rdocumentation.org/packages/clue/versions/0.3-58) package provides similar functionality
+
+-   Beware over-interpretation of clusters!
+
+    -   This is in fact an exploratory technique. And so the clusters may change depend on the way that you sample the data
+
+-   This is one basic approach to [recommendation engines](http://en.wikipedia.org/wiki/Recommender_system)
+
+-   [Elements of statistical learning](http://www-stat.stanford.edu/~tibs/ElemStatLearn/) [@hastie2009]
+
+-   [Introduction to statistical learning](http://www-bcf.usc.edu/~gareth/ISL/) [@jamesIntroductionStatisticalLearning2013]
+
+------------------------------------------------------------------------
+
+# **References**
